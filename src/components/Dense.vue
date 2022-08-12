@@ -43,7 +43,7 @@
 
         <el-collapse-item name="2">
           <template #title>
-            <el-form-item label="activation">
+            <el-form-item label="activation" prop="activation">
               <el-select v-model="CData.activation"
                          @keyup.enter.stop
                          @keyup.space.stop
@@ -103,7 +103,10 @@ export default {
     const ruleForms = ref(null)
     const rules = reactive({
       units: [
-        {required: true, message: 'Please input Activity name', trigger: 'blur'}
+        {required: true, message: 'Please input units', trigger: 'blur'}
+      ],
+      activation: [
+        {required: true, message: 'Please input activation', trigger: 'change'}
       ]
     })
     const methods = {

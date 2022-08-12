@@ -24,8 +24,8 @@
         </el-collapse-item>
         <el-collapse-item name="2">
           <template #title>
-            <el-form-item label="kernal size" prop="kernalSize">
-              <el-input v-model="CData.kernalSize"
+            <el-form-item label="kernel size" prop="kernelSize">
+              <el-input v-model="CData.kernelSize"
                         placeholder="Two integer separated by a comma"
                         @keyup.enter.stop
                         @keyup.space.stop
@@ -118,7 +118,7 @@ export default {
       filter: [
         {required: true, message: 'Please input Activity name', trigger: 'blur'}
       ],
-      kernalSize: [
+      kernelSize: [
         {required: true, message: 'Please input Activity name', trigger: 'blur'}
       ],
       activation: [
