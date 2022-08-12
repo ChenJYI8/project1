@@ -226,13 +226,13 @@ export default {
           },
           data: {
             filter: null,
-            kernalSize: null,
+            kernelSize: null,
             activation: '',
             padding: '',
             isActive: '',
             isValid: {
               filter: false,
-              kernalSize: false
+              kernelSize: false
             }
           },
         },
@@ -360,13 +360,13 @@ export default {
     hasProperty(obj, key) {
       return Object.keys(obj).includes(key)
     },
-    delFile(id) {
-      for (let i = 0; i < this.fileList.length; i++) {
-        if (this.fileList[i].id === id) {
-          this.fileList.splice(i, 1)
-        }
-      }
-    },
+    // delFile(id) {
+    //   for (let i = 0; i < this.fileList.length; i++) {
+    //     if (this.fileList[i].id === id) {
+    //       this.fileList.splice(i, 1)
+    //     }
+    //   }
+    // },
     cleanAllData() {
       this.$messageBox.confirm(
           'Are you sure to clear the list?',
@@ -464,7 +464,7 @@ export default {
       //确认上传
       const _this = this;
       //如果没有选择文件则不允许点击,并给出提示选择文件后点击上传按钮
-      if (_this.fileList == '') {
+      if (_this.fileList === '') {
         this.$notify.warning({
           title: 'message',
           message: 'Please click the [select file] to upload the file'
@@ -514,7 +514,7 @@ export default {
       this.fileList.push(componentItem)
       this.fileList = fileList;
     },
-    deleteItem(e) {
+    deleteItem() {
       this.binList = [];
       this.willDelete = false
       this.showBin = false
