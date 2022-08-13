@@ -26,13 +26,21 @@
             <el-col :span="5">
               <el-button type="primary" @click="submit">submit</el-button>
             </el-col>
-            <el-col :span="5">
+            <el-col :span="5"  style="margin-right: 10px">
               <el-alert title="文件还未未上传" type="error" center show-icon v-if="!fileIsUpload" :closable="false"/>
-              <el-alert type="success" center show-icon v-else :closable="false">
+              <el-alert type="success" center show-icon v-else-if="fileIsUpload&&this.fileList.length !== 0" :closable="false">
                 <template #title>
-                  [{{this.fileList[0].name}}]--文件上传成功
+                  {{"["+this.fileList[0].name+"]--文件上传成功"}}
                 </template>
               </el-alert>
+              <el-alert type="success" center show-icon v-else :closable="false">
+                <template #title>
+                  本次上传不需要提交文件
+                </template>
+              </el-alert>
+            </el-col>
+            <el-col :span="4" v-if="fileList.length === 0">
+              <el-switch v-model="fileIsUpload"/>提交数据不上传文件
             </el-col>
           </el-row>
         </el-col>
@@ -137,10 +145,6 @@
                 ref="childRules"
             />
           </el-card>
-          <div style="height: 10px"/>
-          <div>
-            <pre>{{ getAllList }}</pre>
-          </div>
         </el-col>
       </el-row>
     </el-main>
@@ -316,7 +320,8 @@ export default {
       currentComponents: null,
       wsUrl: 'ws://localhost:8080/websocket',
       webSocket: null,
-      fileIsUpload: false  // 判断文件是否上传
+      fileIsUpload: false,  // 判断文件是否上传
+      test: false
     };
   },
   created() {
@@ -514,6 +519,7 @@ export default {
 
     },
     changeUpload(file, fileList) {
+      this.fileIsUpload = false
       let componentItem = new ComponentItem(id++, 'lc-data', ['file'])
       componentItem.set('file', file)
       this.fileList = fileList;
