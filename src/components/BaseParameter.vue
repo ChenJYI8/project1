@@ -25,7 +25,7 @@
                  :model="CData"
                  ref="ruleForms"
                  @validate="methods.validate"
-                 validate-on-rule-change="true"
+                 :validate-on-rule-change="true"
         >
           <el-collapse-item name="1">
             <template #title>

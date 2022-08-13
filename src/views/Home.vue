@@ -2,7 +2,7 @@
 
   <el-container class="container" v-loading="loading">
     <el-main>
-      <el-row>
+      <el-row style="height: 100px">
         <el-col :span="24">
           <el-row justify="center" style="margin: 10px;box-sizing:border-box;">
             <el-col :span="4">
@@ -26,11 +26,12 @@
             <el-col :span="5">
               <el-button type="primary" @click="submit">submit</el-button>
             </el-col>
-            <el-col :span="5"  style="margin-right: 10px">
+            <el-col :span="5" style="margin-right: 10px">
               <el-alert title="文件还未未上传" type="error" center show-icon v-if="!fileIsUpload" :closable="false"/>
-              <el-alert type="success" center show-icon v-else-if="fileIsUpload&&this.fileList.length !== 0" :closable="false">
+              <el-alert type="success" center show-icon v-else-if="fileIsUpload&&this.fileList.length !== 0"
+                        :closable="false">
                 <template #title>
-                  {{"["+this.fileList[0].name+"]--文件上传成功"}}
+                  {{ "[" + this.fileList[0].name + "]--文件上传成功" }}
                 </template>
               </el-alert>
               <el-alert type="success" center show-icon v-else :closable="false">
@@ -40,13 +41,35 @@
               </el-alert>
             </el-col>
             <el-col :span="4" v-if="fileList.length === 0">
-              <el-switch v-model="fileIsUpload"/>提交数据不上传文件
+              <el-switch v-model="fileIsUpload"/>
+              提交数据不上传文件
             </el-col>
           </el-row>
         </el-col>
       </el-row>
       <el-row :gutter="20">
         <el-col :span="6">
+          <el-row class="file-wrap">
+            <el-card class="data_area" >
+              <template #header>
+                <div class="card-header">
+                  <span>Time line</span>
+                </div>
+              </template>
+              <el-timeline style="height: 480px;overflow: auto">
+                <el-timeline-item
+                    v-for="(activity, index) in activities"
+                    :key="index"
+                    :timestamp="activity.timestamp"
+                >
+                  {{ activity.content }}
+                </el-timeline-item>
+              </el-timeline>
+            </el-card>
+          </el-row>
+        </el-col>
+
+        <el-col :span="5">
           <el-card class="box-card">
             <template #header>
               <div class="card-header">
@@ -58,44 +81,8 @@
                          :key="index" @click.capture="tapComponents(item)"/>
             </el-row>
           </el-card>
-          <div style="height: 10px"/>
-          <!--          <el-row class="file-wrap">-->
-          <!--            <el-card class="data_area">-->
-          <!--              <template #header>-->
-          <!--                <div class="card-header">-->
-          <!--                  <span>Data File</span>-->
-          <!--                </div>-->
-          <!--              </template>-->
-          <!--              <div v-if="!fileIsUpload">-->
-          <!--                文件还未未上传-->
-          <!--              </div>-->
-          <!--              <div v-else>-->
-          <!--                文件上传成功-->
-          <!--              </div>-->
-          <!--&lt;!&ndash;              <draggable&ndash;&gt;-->
-          <!--&lt;!&ndash;                  draggable="false"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  :group="{&ndash;&gt;-->
-          <!--&lt;!&ndash;                    name: 'lowCode',&ndash;&gt;-->
-          <!--&lt;!&ndash;                    pull:'clone',&ndash;&gt;-->
-          <!--&lt;!&ndash;                    put: false&ndash;&gt;-->
-          <!--&lt;!&ndash;                  }"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  :sort="true"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  :animation="300"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  filter=".unmover"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  v-model="fileList"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  item-key="item"&ndash;&gt;-->
-          <!--&lt;!&ndash;                  ghostClass="ghost"&ndash;&gt;-->
-          <!--&lt;!&ndash;              >&ndash;&gt;-->
-          <!--&lt;!&ndash;                <template v-slot:item="{ element }">&ndash;&gt;-->
-          <!--&lt;!&ndash;                  <component v-if="element.id" :is="element.type" :data="element" :key="element.id" class="file"&ndash;&gt;-->
-          <!--&lt;!&ndash;                             @del="delFile"/>&ndash;&gt;-->
-          <!--&lt;!&ndash;                </template>&ndash;&gt;-->
-          <!--&lt;!&ndash;              </draggable>&ndash;&gt;-->
-          <!--            </el-card>-->
-          <!--          </el-row>-->
         </el-col>
-
-        <el-col :span="8">
+        <el-col :span="5">
           <el-row>
             <el-card class="code_area">
               <template #header>
@@ -130,7 +117,7 @@
             </el-card>
           </el-row>
         </el-col>
-        <el-col :span="10">
+        <el-col :span="8">
           <el-card>
             <template #header>
               <div class="card-header">
@@ -231,6 +218,7 @@ export default {
   },
   data() {
     return {
+      activities: [],
       willDelete: false, // 是否删除已选组件
       showBin: false,
       dialogVisible: false,  //  显示隐藏对话框
@@ -318,10 +306,11 @@ export default {
       loading: false,
       returnData: [],  //  后端返回的数据
       currentComponents: null,
-      wsUrl: 'ws://localhost:8080/websocket',
+      wsUrl: 'ws://localhost:8080/websocket/ai',
       webSocket: null,
       fileIsUpload: false,  // 判断文件是否上传
-      test: false
+      test: false,
+      file: []
     };
   },
   created() {
@@ -337,9 +326,9 @@ export default {
     this.initWebSocket()
   },
   computed: {
-    getAllList() {
-      return this.clearAttr(JSON.parse(JSON.stringify([this.baseData, ...this.list, ...this.fileList])))
-    },
+    // getAllList() {
+    //   return this.clearAttr(JSON.parse(JSON.stringify([this.baseData, ...this.list, this.file])))
+    // },
   },
   methods: {
     handleDragEnd() {
@@ -351,6 +340,11 @@ export default {
       this.currentComponents = obj
       obj.isActive = true
       this.openDiv(obj)
+      this.activities.push({
+        content: 'Add Component '+e.type,
+        timestamp: this.getCurrentTime(),
+      })
+
     },
     clearAttr(oldArr) {
       let arr = oldArr
@@ -395,6 +389,10 @@ export default {
         this.baseData.toCategorical = 'False'
         this.baseData.isValid = false
         this.currentComponents = this.baseData
+        this.activities.push({
+          content: 'Clean All Component',
+          timestamp: this.getCurrentTime(),
+        })
       }).catch(() => {
         this.$message({
           type: 'warning',
@@ -451,9 +449,13 @@ export default {
         return;
       }
       this.dialogVisible = true
-      this.submitList = this.clearAttr([this.baseData, ...this.list, ...this.fileList]);
+      this.submitList = JSON.stringify(this.clearAttr([this.baseData, ...this.list, this.file]));
+      // this.websocketsend(this.submitList)
+      this.activities.push({
+        content: '提交了数据',
+        timestamp: this.getCurrentTime(),
+      })
       getReturnData(this.submitList).then((res) => {
-        console.log(res)
         if (res === "success") {
           this.$message({
             message: "success",
@@ -472,7 +474,7 @@ export default {
       //确认上传
       const _this = this;
       //如果没有选择文件则不允许点击,并给出提示选择文件后点击上传按钮
-      if (_this.fileList == '') {
+      if (_this.fileList.length === 0) {
         this.$notify.warning({
           title: 'message',
           message: 'Please click the [select file] to upload the file'
@@ -483,9 +485,12 @@ export default {
         //将文件append到formData对象
         param.append("file", _this.fileList[0].raw);
         param.append("name", _this.fileList[0].name);
-        console.log(_this.fileList)
         uploadFile(param).then(() => {
           this.fileIsUpload = true
+          this.activities.push({
+            content: '上传了文件'+ _this.fileList[0].name,
+            timestamp: this.getCurrentTime(),
+          })
         })
       }
     },
@@ -500,6 +505,7 @@ export default {
             cancelButtonText: 'no',
             type: 'warning',
           }).then(() => {
+
         stopReturnData(false).then((res) => {
           if (res) {
             this.returnData = []
@@ -522,6 +528,7 @@ export default {
       this.fileIsUpload = false
       let componentItem = new ComponentItem(id++, 'lc-data', ['file'])
       componentItem.set('file', file)
+      this.file = componentItem
       this.fileList = fileList;
     },
     deleteItem() {
@@ -590,40 +597,64 @@ export default {
       return obj
     },
     initWebSocket() {
+
       if (typeof WebSocket === 'undefined')
-        return console.log('您的浏览器不支持websocket')
+        throw new Error('您的浏览器不支持websocket')
       this.websock = new WebSocket(this.wsUrl)
+      this.activities.push({
+        content: 'init websocket',
+        timestamp: this.getCurrentTime(),
+      })
       this.websock.onmessage = this.websocketonmessage
       this.websock.onopen = this.websocketonopen
       this.websock.onerror = this.websocketonerror
       this.websock.onclose = this.websocketclose
     },
     websocketonopen() {
-      console.log('open')
-      // 连接建立之后执行send方法发送数据
-      // let actions = this.submitList
-      // this.websocketsend()
+      this.activities.push({
+        content: 'open websocket',
+        timestamp: this.getCurrentTime(),
+      })
     },
     websocketonerror() {
+      this.activities.push({
+        content: 'connect websocket fail',
+        timestamp: this.getCurrentTime(),
+      })
       // 连接建立失败重连
       this.initWebSocket()
     },
     websocketonmessage(e) {
       // 数据接收
       const redata = (e.data)
-
       this.returnData.push(redata)
-      console.log('接收的数据', redata)
+      this.activities.push({
+        content: '接收到了数据',
+        timestamp: this.getCurrentTime(),
+      })
     },
     websocketsend(Data) {
-      console.log("send", Data)
       // 数据发送
       this.websock.send(Data)
     },
-    websocketclose(e) {
+    websocketclose() {
+      this.activities.push({
+        content: 'close websocket connection',
+        timestamp: this.getCurrentTime(),
+      })
       // 关闭
-      console.log('断开连接', e)
     },
+    getCurrentTime() {
+      //获取当前时间并打印
+      let yy = new Date().getFullYear();
+      let mm = new Date().getMonth()+1;
+      let dd = new Date().getDate();
+      let hh = new Date().getHours();
+      let mf = new Date().getMinutes()<10 ? '0'+new Date().getMinutes() : new Date().getMinutes();
+      let ss = new Date().getSeconds()<10 ? '0'+new Date().getSeconds() : new Date().getSeconds();
+      return yy+'/'+mm+'/'+dd+' '+hh+':'+mf+':'+ss;
+
+    }
   }
 }
 ;
