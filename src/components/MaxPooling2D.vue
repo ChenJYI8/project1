@@ -82,7 +82,7 @@ export default {
       default: false
     }
   },
-  emits: ['open'],
+  emits: ['open', 'isNext'],
   setup(props, ctx) {
     const CData = reactive(props.data)
     const ruleForms = ref(null)
@@ -113,6 +113,7 @@ export default {
       },
       validate(prop, isValid) {
         CData.isValid[prop] = isValid
+        ctx.emit('isNext')
       }
     }
     onMounted(() => {

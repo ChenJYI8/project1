@@ -1,8 +1,5 @@
 <template>
   <div style="width: 100%" class="comp-item">
-<!--    <div @click="methods.handleClick" v-if="isTemplate" :style="{color: (CData.isActive ? 'blue' : 'black')}">-->
-<!--      <span style="color: red; font-weight: bold" v-if="CData.id !== undefined">{{"("+CData.id+")"}}</span> BatchNormalization-->
-<!--    </div>-->
     <el-collapse v-if="!isTemplate">
       <el-collapse-item>
         <template #title>
@@ -17,25 +14,15 @@
       <span style="color: red; font-weight: bold" v-if="CData.id !== undefined">{{ "(" + CData.id + ")" }}</span>
       BatchNormalization
     </div>
-    <el-collapse v-if="!isTemplate" >
-      <el-form :model="CData">
-        <el-collapse-item name="2">
-          <template #title>
-            <el-form-item>
-              <el-input type="text"
-                        disabled v-model="CData.value"
-                        @keyup.enter.stop
-                        @keyup.space.stop
-                        @click.stop />
-            </el-form-item>
-          </template>
-          <div>
-            Consistent with real life: in line with the process and logic of real
-            life, and comply with languages and habits that the users are used to;
-          </div>
-        </el-collapse-item>
-      </el-form>
-    </el-collapse>
+    <el-form :model="CData" v-if="!isTemplate">
+      <el-form-item>
+        <el-input type="text"
+                  disabled v-model="CData.value"
+                  @keyup.enter.stop
+                  @keyup.space.stop
+                  @click.stop/>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
@@ -71,7 +58,6 @@ export default {
             CData.isActive = true
           }
         }
-
       }
     }
     return {

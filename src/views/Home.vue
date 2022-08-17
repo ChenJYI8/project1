@@ -47,10 +47,27 @@
           </el-row>
         </el-col>
       </el-row>
+      <el-row style="height: 80px;">
+        <el-col>
+          <el-tag
+              v-for="(tag, index) in parameterSetList"
+              :key="tag.title"
+              style="margin: 0 10px;justify-content: space-between"
+              closable
+              effect="dark"
+              type="warning"
+              size="large"
+              @click="addParamterSet(tag)"
+              @close="delParamterSet(tag.title, index)"
+          >
+            {{ tag.title }}
+          </el-tag>
+        </el-col>
+      </el-row>
       <el-row :gutter="20">
         <el-col :span="6">
           <el-row class="file-wrap">
-            <el-card class="data_area" >
+            <el-card class="data_area">
               <template #header>
                 <div class="card-header">
                   <span>Time line</span>
@@ -88,7 +105,12 @@
               <template #header>
                 <div class="card-header">
                   <span>Model:</span>
-                  <el-button type="danger" @click="cleanAllData">
+                  <el-button type="primary" @click="saveParam" circle>
+                    <el-icon size="16px">
+                      <CirclePlus />
+                    </el-icon>
+                  </el-button>
+                  <el-button type="danger" @click="cleanAllData" circle>
                     <el-icon size="16px">
                       <Delete/>
                     </el-icon>
@@ -118,20 +140,32 @@
           </el-row>
         </el-col>
         <el-col :span="8">
-          <el-card>
-            <template #header>
-              <div class="card-header">
-                <span>Layer Parameter:</span>
-              </div>
+          <el-popover
+              placement="bottom"
+              title="Title"
+              :width="200"
+              :visible="tipVisible"
+              content="按enter切换到下一个"
+          >
+            <template #reference>
+              <el-card>
+                <template #header>
+                  <div class="card-header">
+                    <span>Layer Parameter:</span>
+                  </div>
+                </template>
+                <component
+                    :is="currentComponents.type"
+                    :data="currentComponents"
+                    :key="currentComponents.id"
+                    :isTemplate="false"
+                    ref="childRules"
+                    @isNext="isNext"
+                />
+              </el-card>
             </template>
-            <component
-                :is="currentComponents.type"
-                :data="currentComponents"
-                :key="currentComponents.id"
-                :isTemplate="false"
-                ref="childRules"
-            />
-          </el-card>
+          </el-popover>
+
         </el-col>
       </el-row>
     </el-main>
@@ -177,7 +211,7 @@
 <script>
 // 导入拖拽
 import draggable from "vuedraggable";
-import {Delete} from '@element-plus/icons-vue'
+import {Delete, CirclePlus} from '@element-plus/icons-vue'
 
 // 导入组件
 import LcData from "@/components/LCData";
@@ -204,6 +238,7 @@ export default {
   name: "HomePage",
   components: {
     Delete,
+    CirclePlus,
     draggable,
     LcData,
     LcNumber,
@@ -224,6 +259,7 @@ export default {
       dialogVisible: false,  //  显示隐藏对话框
       list: [], // 拖拽的列表,
       formDataT: new FormData(),  // 传给后端的文件放在这里
+      parameterSetList: [],
       componentsList: [
         {
           type: 'Convolution2D',
@@ -310,7 +346,8 @@ export default {
       webSocket: null,
       fileIsUpload: false,  // 判断文件是否上传
       test: false,
-      file: []
+      file: [],
+      tipVisible: false
     };
   },
   created() {
@@ -321,16 +358,102 @@ export default {
       isValid: false
     })
     this.currentComponents = this.baseData
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      this.parameterSetList.push({
+        title: key,
+        value: localStorage.getItem(key)
+      })
+    }
   },
   mounted() {
     this.initWebSocket()
+    window.addEventListener("keydown", this.handleEnter)
   },
-  computed: {
-    // getAllList() {
-    //   return this.clearAttr(JSON.parse(JSON.stringify([this.baseData, ...this.list, this.file])))
-    // },
-  },
+  computed: {},
   methods: {
+    isNext() {
+      if(this.list.length === 0) return false
+      if (this.currentComponents.id === this.list[this.list.length-1].id) {
+        return false
+      }
+      if (this.currentComponents.isValid === false) {
+         return false
+      }else if (this.currentComponents.isValid instanceof Object){
+        for (const validKey in this.currentComponents.isValid) {
+          if (this.currentComponents.isValid[validKey] === false) {
+            return false
+          }
+        }
+      }
+      this.tipVisible = true
+      return true
+    },
+    handleEnter(e) {
+      if (e.keyCode === 13 && this.tipVisible) {
+        if (this.currentComponents.id === 0) {
+          this.currentComponents = this.list[0]
+          this.openDiv(this.currentComponents)
+          this.tipVisible = false
+          this.currentComponents.isActive = true
+          return
+        }
+        for (let i = 0; i < this.list.length; i++) {
+          if (this.currentComponents.id === this.list[i].id) {
+            if (!this.list[i+1]) return
+            this.currentComponents = this.list[i+1]
+            this.currentComponents.isActive = true
+            this.openDiv(this.currentComponents)
+            this.tipVisible = false
+          }
+        }
+      }
+    },
+    addParamterSet(tag) {
+      const list = JSON.parse(tag.value)
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].isActive === true && list[i].isActive) {
+          this.currentComponents = list[i]
+          this.openDiv(this.currentComponents)
+        }
+      }
+      this.baseData.numClasses = list[0].numClasses
+      this.baseData.isActive = list[0].isActive
+      list.shift()
+      this.list = []
+      this.list = list
+      this.activities.unshift({
+        content: 'use parameterSet --- [' + tag.title +']',
+        timestamp: this.getCurrentTime(),
+      })
+    },
+    delParamterSet(title, index) {
+      this.parameterSetList.splice(index, 1)
+      localStorage.removeItem(title)
+      this.activities.unshift({
+        content: 'delete parameterSet --- [' + title +']',
+        timestamp: this.getCurrentTime(),
+      })
+    },
+    saveParam() {
+      this.$messageBox.prompt("为参数组设置一个名称", "添加", {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        inputPattern: /^[a-zA-Z0-9]{1,20}/,
+        inputErrorMessage: "名字长度1-20之间"
+      })
+          .then(({value}) => {
+            this.activities.unshift({
+              content: 'Add parameterSet ' + value,
+              timestamp: this.getCurrentTime(),
+            })
+            localStorage.setItem(value, JSON.stringify([this.baseData, ...this.list]))
+            this.parameterSetList.push({
+              title: value,
+              value: JSON.stringify([this.baseData, ...this.list]),
+            })
+          })
+    },
     handleDragEnd() {
       this.showBin = false
     },
@@ -340,8 +463,8 @@ export default {
       this.currentComponents = obj
       obj.isActive = true
       this.openDiv(obj)
-      this.activities.push({
-        content: 'Add Component '+e.type,
+      this.activities.unshift({
+        content: 'Add Component ' + e.type,
         timestamp: this.getCurrentTime(),
       })
 
@@ -389,7 +512,7 @@ export default {
         this.baseData.toCategorical = 'False'
         this.baseData.isValid = false
         this.currentComponents = this.baseData
-        this.activities.push({
+        this.activities.unshift({
           content: 'Clean All Component',
           timestamp: this.getCurrentTime(),
         })
@@ -451,7 +574,7 @@ export default {
       this.dialogVisible = true
       this.submitList = JSON.stringify(this.clearAttr([this.baseData, ...this.list, this.file]));
       // this.websocketsend(this.submitList)
-      this.activities.push({
+      this.activities.unshift({
         content: '提交了数据',
         timestamp: this.getCurrentTime(),
       })
@@ -487,8 +610,8 @@ export default {
         param.append("name", _this.fileList[0].name);
         uploadFile(param).then(() => {
           this.fileIsUpload = true
-          this.activities.push({
-            content: '上传了文件'+ _this.fileList[0].name,
+          this.activities.unshift({
+            content: '上传了文件' + _this.fileList[0].name,
             timestamp: this.getCurrentTime(),
           })
         })
@@ -536,6 +659,7 @@ export default {
       this.willDelete = false
       this.showBin = false
     },
+    // 把除了传入的组件的活跃清除
     openDiv(res) {
       if (res.type === "BaseParameter") {
         this.currentComponents = this.baseData
@@ -601,7 +725,7 @@ export default {
       if (typeof WebSocket === 'undefined')
         throw new Error('您的浏览器不支持websocket')
       this.websock = new WebSocket(this.wsUrl)
-      this.activities.push({
+      this.activities.unshift({
         content: 'init websocket',
         timestamp: this.getCurrentTime(),
       })
@@ -611,13 +735,13 @@ export default {
       this.websock.onclose = this.websocketclose
     },
     websocketonopen() {
-      this.activities.push({
+      this.activities.unshift({
         content: 'open websocket',
         timestamp: this.getCurrentTime(),
       })
     },
     websocketonerror() {
-      this.activities.push({
+      this.activities.unshift({
         content: 'connect websocket fail',
         timestamp: this.getCurrentTime(),
       })
@@ -628,7 +752,7 @@ export default {
       // 数据接收
       const redata = (e.data)
       this.returnData.push(redata)
-      this.activities.push({
+      this.activities.unshift({
         content: '接收到了数据',
         timestamp: this.getCurrentTime(),
       })
@@ -638,7 +762,7 @@ export default {
       this.websock.send(Data)
     },
     websocketclose() {
-      this.activities.push({
+      this.activities.unshift({
         content: 'close websocket connection',
         timestamp: this.getCurrentTime(),
       })
@@ -647,12 +771,12 @@ export default {
     getCurrentTime() {
       //获取当前时间并打印
       let yy = new Date().getFullYear();
-      let mm = new Date().getMonth()+1;
+      let mm = new Date().getMonth() + 1;
       let dd = new Date().getDate();
       let hh = new Date().getHours();
-      let mf = new Date().getMinutes()<10 ? '0'+new Date().getMinutes() : new Date().getMinutes();
-      let ss = new Date().getSeconds()<10 ? '0'+new Date().getSeconds() : new Date().getSeconds();
-      return yy+'/'+mm+'/'+dd+' '+hh+':'+mf+':'+ss;
+      let mf = new Date().getMinutes() < 10 ? '0' + new Date().getMinutes() : new Date().getMinutes();
+      let ss = new Date().getSeconds() < 10 ? '0' + new Date().getSeconds() : new Date().getSeconds();
+      return yy + '/' + mm + '/' + dd + ' ' + hh + ':' + mf + ':' + ss;
 
     }
   }

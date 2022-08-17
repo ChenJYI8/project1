@@ -4,8 +4,8 @@
       <div @click="methods.handleClick" style="cursor: pointer" :style="{color: (CData.isActive ? 'blue' : 'black')}">
         <el-collapse v-if="!isTemplate">
           <el-collapse-item>
-            <template #title style="font-size: 16px">
-              BaseParameter
+            <template v-slot:title>
+              <h2> BaseParameter </h2>
             </template>
             <div>
               Consistent with real life: in line with the process and logic of real
@@ -27,13 +27,13 @@
                  @validate="methods.validate"
                  :validate-on-rule-change="true"
         >
-          <el-collapse-item name="1">
+          <el-collapse-item name="1"
+          >
             <template #title>
               <el-form-item label="Number of classification" prop="numClasses">
                 <el-input v-model="CData.numClasses"
-                          placeholder="input an integer"
+                          placeholder="input an 123"
                           @keyup.enter.stop
-                          @keyup.space.stop
                           @click.stop
                 ></el-input>
               </el-form-item>
@@ -82,7 +82,7 @@ export default {
       default: false
     }
   },
-  emits: ['getType'],
+  emits: ['getType', 'isNext'],
   setup(props, ctx) {
     const ruleForms = ref(null);
     const CData = reactive(props.data)
@@ -103,6 +103,7 @@ export default {
       },
       validate(prop, isValid) {
         CData.isValid = isValid
+        ctx.emit('isNext')
       }
     }
     onMounted(() => {

@@ -86,7 +86,7 @@ export default {
       default: false
     }
   },
-  emits: ['open'],
+  emits: ['open', 'isNext'],
   setup(props, ctx) {
     const activationList = reactive([
       {value: "relu"},
@@ -128,6 +128,7 @@ export default {
       },
       validate(prop, isValid) {
         CData.isValid[prop] = isValid
+        ctx.emit('isNext')
       }
     }
 

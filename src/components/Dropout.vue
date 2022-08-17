@@ -62,7 +62,7 @@ export default {
       default: false
     }
   },
-  emits: ['open'],
+  emits: ['open', 'isNext'],
   setup(props, ctx) {
     const CData = reactive(props.data)
     const changeTextColor = ref(props.isCurrent)
@@ -91,7 +91,7 @@ export default {
       },
       validate(prop, isValid) {
         CData.isValid = isValid
-
+        ctx.emit('isNext')
       }
     }
     return {

@@ -4,6 +4,17 @@
       <span style="color: red; font-weight: bold" v-if="CData.id !== undefined">{{"("+CData.id+")"}}</span> Convolution2D
     </div>
     <el-collapse v-if="!isTemplate">
+      <el-collapse-item>
+        <template v-slot:title>
+          <h2> Convolution2D </h2>
+        </template>
+        <div>
+          Consistent with real life: in line with the process and logic of real
+          life, and comply with languages and habits that the users are used to;
+        </div>
+      </el-collapse-item>
+    </el-collapse>
+    <el-collapse v-if="!isTemplate">
       <el-form style="margin: 10px 0 0 20px" :model="CData" :rules="rules" ref="ruleForms"
                @validate="methods.validate">
         <el-collapse-item name="1">
@@ -99,7 +110,7 @@ export default {
       default: false
     }
   },
-  emits: ['open'],
+  emits: ['open', 'isNext'],
   setup(props, ctx) {
     const activationList = reactive([
       {value: "relu"},
@@ -144,6 +155,7 @@ export default {
       },
       validate(prop, isValid) {
         CData.isValid[prop] = isValid
+        ctx.emit('isNext')
       }
     }
     onMounted(() => {
